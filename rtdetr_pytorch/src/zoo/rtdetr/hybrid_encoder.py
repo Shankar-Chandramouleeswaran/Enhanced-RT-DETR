@@ -204,6 +204,10 @@ class HybridEncoder(nn.Module):
         self.num_encoder_layers = num_encoder_layers
         self.pe_temperature = pe_temperature
         self.eval_spatial_size = eval_spatial_size
+        super(HybridEncoder, self).__init__()
+        self.spp = SPPModule(in_channels=in_channels[2], out_channels=hidden_dim // 4)
+        self.aifi = AttentionBasedIntraScale(hidden_dim)
+        self.ccff = CNNBasedCrossScaleFusion(hidden_dim)
 
         self.out_channels = [hidden_dim for _ in range(len(in_channels))]
         self.out_strides = feat_strides
@@ -281,6 +285,11 @@ class HybridEncoder(nn.Module):
         return torch.concat([out_w.sin(), out_w.cos(), out_h.sin(), out_h.cos()], dim=1)[None, :, :]
 
     def forward(self, feats):
+        s5 = features[-1]
+        s5 = self.spp(s5)  # Apply SPP
+        s5 = self.aifi(s5)
+        fused_features = self.ccff([features[0], features[1], s5])
+        return fused_features
         assert len(feats) == len(self.in_channels)
         proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(feats)]
         

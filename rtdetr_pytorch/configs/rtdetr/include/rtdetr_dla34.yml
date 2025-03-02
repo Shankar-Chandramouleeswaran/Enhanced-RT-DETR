@@ -10,6 +10,9 @@ RTDETR:
   encoder: HybridEncoder
   decoder: RTDETRTransformer
   multi_scale: [480, 512, 544, 576, 608, 640, 640, 640, 672, 704, 736, 768, 800]
+  use_fpn_cbam: True
+  fpn_in_channels: [128, 256, 512]  # <-- Provide the channel numbers output by the backbone.
+  fpn_out_channels: 256
 
 DLANet:
   dla: dla34

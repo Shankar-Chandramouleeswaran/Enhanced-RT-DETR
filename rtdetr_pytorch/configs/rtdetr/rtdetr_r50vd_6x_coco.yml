@@ -1,0 +1,18 @@
+__include__: [
+  '../dataset/coco_detection.yml',
+  '../runtime.yml',
+  './include/dataloader.yml',
+  './include/optimizer.yml',
+  './include/rtdetr_r50vd.yml',
+]
+
+output_dir: ./output/rtdetr_r50vd_6x_coco
+
+RTDETR:
+  backbone: PResNet
+  encoder: HybridEncoder
+  decoder: RTDETRTransformer
+  multi_scale: [480, 512, 544, 576, 608, 640, 640, 640, 672, 704, 736, 768, 800]
+  use_spp_cbam: True
+  spp_cbam_in_channels: [512, 1024, 2048]  # Use the original backbone channel dimensions.
+  spp_cbam_out_channels: 256

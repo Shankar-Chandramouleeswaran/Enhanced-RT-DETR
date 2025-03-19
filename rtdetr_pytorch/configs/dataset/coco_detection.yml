@@ -7,13 +7,13 @@ train_dataloader:
   type: DataLoader
   dataset: 
     type: CocoDetection
-    img_folder: /xdisk/ldbrown/shankarc/fpn/coco/train2017/
-    ann_file: /xdisk/ldbrown/shankarc/fpn/coco/annotations/instances_train2017.json
+    img_folder: /home/exouser/Downloads/coco/train2017/
+    ann_file: /home/exouser/Downloads/coco/annotations/instances_train2017.json
     transforms:
       type: Compose
       ops: ~
   shuffle: True
-  batch_size: 8
+  batch_size: 16
   num_workers: 4
   drop_last: True 
 
@@ -22,13 +22,13 @@ val_dataloader:
   type: DataLoader
   dataset: 
     type: CocoDetection
-    img_folder: /xdisk/ldbrown/shankarc/fpn/coco/val2017/
-    ann_file: /xdisk/ldbrown/shankarc/fpn/coco/annotations/instances_val2017.json
+    img_folder: /home/exouser/Downloads/coco/val2017/
+    ann_file: /home/exouser/Downloads/coco/annotations/instances_val2017.json
     transforms:
       type: Compose
       ops: ~ 
 
   shuffle: False
-  batch_size: 8
+  batch_size: 16
   num_workers: 4
   drop_last: False

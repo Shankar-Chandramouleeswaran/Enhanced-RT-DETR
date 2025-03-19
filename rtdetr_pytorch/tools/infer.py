@@ -13,6 +13,26 @@ from src.core import YAMLConfig
 from src.solver import TASKS
 import numpy as np
 
+COCO_CLASSES = [
+    "person", "bicycle", "car", "motorcycle", "airplane", "bus",
+    "truck", "traffic light", "fire hydrant", "stop sign",
+    "parking meter"
+]
+
+CLASS_COLORS = {
+    "person": (0, 255, 0),          # Green
+    "bicycle": (255, 0, 0),         # Red
+    "car": (0, 0, 255),             # Blue
+    "motorcycle": (255, 165, 0),    # Orange
+    "airplane": (128, 0, 128),      # Purple
+    "bus": (255, 255, 0),           # Yellow
+    "truck": (0, 255, 255),         # Cyan
+    "traffic light": (255, 0, 255), # Magenta
+    "fire hydrant": (0, 128, 128),  # Teal
+    "stop sign": (128, 0, 0),       # Dark Red
+    "parking meter": (128, 128, 0)  # Olive
+}
+
 def postprocess(labels, boxes, scores, iou_threshold=0.55):
     def calculate_iou(box1, box2):
         x1, y1, x2, y2 = box1
@@ -98,20 +118,47 @@ def merge_predictions(predictions, slice_coordinates, orig_image_size, slice_wid
         merged_boxes.extend(valid_boxes)
         merged_scores.extend(valid_scores)
     return np.array(merged_labels), np.array(merged_boxes), np.array(merged_scores)
-def draw(images, labels, boxes, scores, thrh = 0.6, path = ""):
-    for i, im in enumerate(images):
-        draw = ImageDraw.Draw(im)
+
+def draw(images, labels, boxes, scores, threshold=0.6, save_path=""):
+    """Draw bounding boxes with high-contrast colors and adaptive text color."""
+
+    for i, img in enumerate(images):
+        draw = ImageDraw.Draw(img)
         scr = scores[i]
-        lab = labels[i][scr > thrh]
-        box = boxes[i][scr > thrh]
-        scrs = scores[i][scr > thrh]
-        for j,b in enumerate(box):
-            draw.rectangle(list(b), outline='red',)
-            draw.text((b[0], b[1]), text=f"label: {lab[j].item()} {round(scrs[j].item(),2)}", font=ImageFont.load_default(), fill='blue')
-        if path == "":
-            im.save(f'results_{i}.jpg')
-        else:
-            im.save(path)
+        valid_indices = scr > threshold
+        lab, box, scrs = labels[i][valid_indices], boxes[i][valid_indices], scr[valid_indices]
+        font = ImageFont.load_default()
+
+        for j, b in enumerate(box):
+            class_id = int(lab[j].item())
+            class_name = COCO_CLASSES[class_id] if class_id < len(COCO_CLASSES) else f"id:{class_id}"
+            color = CLASS_COLORS.get(class_name, (255, 255, 255))  # Default: white
+
+            # Draw bounding box (thickness reduced to 2)
+            draw.rectangle(list(b), outline=color, width=2)
+
+            # Label text
+            conf = round(scrs[j].item(), 2)
+            label_text = f"{class_name} {conf}"
+
+            # Measure text box
+            text_bbox = draw.textbbox((b[0], b[1]), label_text, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+
+            # Compute brightness of box color
+            r, g, b_col = color
+            brightness = 0.299 * r + 0.587 * g + 0.114 * b_col
+            text_color = (0, 0, 0) if brightness > 128 else (255, 255, 255)
+
+            # Draw filled background for label
+            draw.rectangle([b[0], b[1] - text_height - 4, b[0] + text_width + 4, b[1]], fill=color)
+
+            # Draw text with adaptive color
+            draw.text((b[0] + 2, b[1] - text_height - 2), label_text, fill=text_color, font=font)
+
+        img.save(save_path if save_path else f"results_{i}.jpg")
+
             
 def main(args, ):
     """main
